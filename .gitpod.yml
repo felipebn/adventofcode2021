@@ -1,0 +1,8 @@
+image:
+  file: .gitpod.Dockerfile
+tasks:
+  - name: Workspace setup
+    command: gitpod/start.sh
+vscode:
+  extensions:
+    - elixir-lsp.elixir-ls
