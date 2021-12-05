@@ -8,10 +8,9 @@ defmodule Adv21.Day01.SonarSweep do
       case result do
         {:none, 0} -> {item, 0}
         {last, count} when item > last -> {item, count + 1}
-        {last, count} -> {item, count}
+        {_, count} -> {item, count}
       end
     end)
-    |>IO.inspect()
 
     increments
   end
@@ -34,7 +33,6 @@ defmodule Adv21.Day01.SonarSweep do
           {window ++ [item], previous_wsum, count}
       end
     end)
-    |>IO.inspect()
 
     increments
   end
