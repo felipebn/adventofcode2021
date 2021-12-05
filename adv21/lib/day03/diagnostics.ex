@@ -7,7 +7,6 @@ defmodule Adv21.Day03.Diagnostics do
     |> Enum.reduce([[0,0],[0,0],[0,0],[0,0],[0,0]], fn bits, bits_usage ->
       {usage, _} = bits
         |> Enum.reduce({bits_usage, 0}, fn b, {bus, i} ->
-          IO.inspect(bus)
           [z, o] = Enum.at(bus, i)
           counts = case b do
             "0" -> [z + 1, o]
@@ -21,16 +20,30 @@ defmodule Adv21.Day03.Diagnostics do
 
     IO.inspect(bits_usage)
 
-    bits_usage
-      |> Enum.map(fn [z, o] ->
+    [gamma, epsilon] = bits_usage
+      |> Enum.reduce({[],[]}, fn [z, o], {common_bits, least_bits} ->
         if z > o do
-          0
+          {common_bits ++ [0], least_bits ++ [1]}
         else
-          1
+          {common_bits ++ [1], least_bits ++ [0]}
         end
       end)
+      |> Tuple.to_list()
+      |> Enum.map(fn bits -> to_decimal(bits) end)
 
-    0
+    IO.inspect(%{:gamma => gamma, :epsilon => epsilon})
+
+    gamma * epsilon
+  end
+
+  defp to_decimal(bits) do
+    IO.inspect({:bits, bits})
+    {decimal, _} = bits
+      |> Enum.reduce({0,length(bits) - 1}, fn b, {acc, i} ->
+        {acc + (b * :math.pow(2, i)), i - 1}
+      end)
+
+    decimal
   end
 
 end
