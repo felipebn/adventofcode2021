@@ -8,20 +8,59 @@ defmodule Adv21.Day03.Diagnostics do
 
     IO.inspect(bits_usage)
 
-    [gamma, epsilon] = bits_usage
-      |> Enum.reduce({[],[]}, fn [z, o], {common_bits, least_bits} ->
-        if z > o do
-          {common_bits ++ [0], least_bits ++ [1]}
-        else
-          {common_bits ++ [1], least_bits ++ [0]}
-        end
-      end)
+    [gamma, epsilon] = get_commons_and_least_commons(bits_usage)
       |> Tuple.to_list()
       |> Enum.map(fn bits -> to_decimal(bits) end)
 
     IO.inspect(%{:gamma => gamma, :epsilon => epsilon})
 
     gamma * epsilon
+  end
+
+  # Naive implementation, using a prefix tree would be better
+  # rewriting the get_bits_usage and get_commons would also
+  # create more efficient versions
+  def life_support_rating(filename, use_common_bits) do
+    oxygen_bits = File.stream!(filename)
+      |> Enum.map(&String.trim/1)
+      |> Enum.map(fn bin -> String.split(bin, "", [trim: true]) end)
+      |> find_input(true, 0)
+
+    IO.inspect(oxygen_bits)
+
+    co2_bits = File.stream!(filename)
+      |> Enum.map(&String.trim/1)
+      |> Enum.map(fn bin -> String.split(bin, "", [trim: true]) end)
+      |> find_input(false, 0)
+
+    IO.inspect(co2_bits)
+
+    # TODO convert to decimal and multiply
+
+    0
+  end
+
+  defp find_input(input_list, use_common_bits, index) do
+    case input_list do
+      [input] -> input
+      _ -> input_list |> filter_input(use_common_bits, index) |> find_input(use_common_bits, index + 1)
+    end
+  end
+
+  defp filter_input(input_list, use_common_bits, index) do
+    # TODO get_commons need to handle equal counts (e.g. [z=5, o=5], use 1 or 0 (common or least))
+    [commons, least_commons] input_list
+      |> get_bits_usage()
+      |> get_commons_and_least_commons()
+
+    mask = if use_common_bits do
+      commons
+    else
+      least_commons
+    end
+
+    input_list
+      |> Enum.filter(fn b -> Enum.at(b, index) == Enum.at(mask, index))
   end
 
   defp get_bits_usage(input_list) do
@@ -44,6 +83,17 @@ defmodule Adv21.Day03.Diagnostics do
           end)
 
         usage
+      end)
+  end
+
+  def get_commons_and_least_commons(bits_usage) do
+    bits_usage
+      |> Enum.reduce({[],[]}, fn [z, o], {common_bits, least_bits} ->
+        if z > o do
+          {common_bits ++ [0], least_bits ++ [1]}
+        else
+          {common_bits ++ [1], least_bits ++ [0]}
+        end
       end)
   end
 
