@@ -4,19 +4,7 @@ defmodule Adv21.Day03.Diagnostics do
     bits_usage = File.stream!(filename)
     |> Enum.map(&String.trim/1)
     |> Enum.map(fn bin -> String.split(bin, "", [trim: true]) end)
-    |> Enum.reduce([[0,0],[0,0],[0,0],[0,0],[0,0]], fn bits, bits_usage ->
-      {usage, _} = bits
-        |> Enum.reduce({bits_usage, 0}, fn b, {bus, i} ->
-          [z, o] = Enum.at(bus, i)
-          counts = case b do
-            "0" -> [z + 1, o]
-            "1" -> [z, o + 1]
-          end
-          {List.replace_at(bus, i, counts), i + 1}
-        end)
-
-      usage
-    end)
+    |> get_bits_usage()
 
     IO.inspect(bits_usage)
 
@@ -36,8 +24,30 @@ defmodule Adv21.Day03.Diagnostics do
     gamma * epsilon
   end
 
+  defp get_bits_usage(input_list) do
+    input_list
+      |> Enum.reduce([], fn bits, bits_usage ->
+        # trick to make the bit usage count size match the input
+        bits_usage = case bits_usage do
+          [] -> 0..length(bits) - 1 |> Enum.map(fn _ -> [0,0] end)
+          _ -> bits_usage
+        end
+
+        {usage, _} = bits
+          |> Enum.reduce({bits_usage, 0}, fn b, {bus, i} ->
+            [z, o] = Enum.at(bus, i)
+            counts = case b do
+              "0" -> [z + 1, o]
+              "1" -> [z, o + 1]
+            end
+            {List.replace_at(bus, i, counts), i + 1}
+          end)
+
+        usage
+      end)
+  end
+
   defp to_decimal(bits) do
-    IO.inspect({:bits, bits})
     {decimal, _} = bits
       |> Enum.reduce({0,length(bits) - 1}, fn b, {acc, i} ->
         {acc + (b * :math.pow(2, i)), i - 1}
