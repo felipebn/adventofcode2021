@@ -1,4 +1,4 @@
-defmodule SubmarineTest do
+defmodule DiagnosticsTest do
   use ExUnit.Case
   alias Adv21.Day03.Diagnostics
   doctest Adv21.Day03.Diagnostics
