@@ -1,9 +1,7 @@
 defmodule Adv21.Day03.Diagnostics do
 
   def power_consumption(filename) do
-    bits_usage = File.stream!(filename)
-    |> Enum.map(&String.trim/1)
-    |> Enum.map(fn bin -> String.split(bin, "", [trim: true]) end)
+    bits_usage = load_file_input_stream(filename)
     |> get_bits_usage()
 
     IO.inspect(bits_usage)
@@ -20,24 +18,16 @@ defmodule Adv21.Day03.Diagnostics do
   # Naive implementation, using a prefix tree would be better
   # rewriting the get_bits_usage and get_commons would also
   # create more efficient versions
-  def life_support_rating(filename, use_common_bits) do
-    oxygen_bits = File.stream!(filename)
-      |> Enum.map(&String.trim/1)
-      |> Enum.map(fn bin -> String.split(bin, "", [trim: true]) end)
+  def life_support_rating(filename) do
+    oxygen_bits = load_file_input_stream(filename)
       |> find_input(true, 0)
 
-    IO.inspect(oxygen_bits)
+    IO.inspect({:oxygen, oxygen_bits})
 
-    co2_bits = File.stream!(filename)
-      |> Enum.map(&String.trim/1)
-      |> Enum.map(fn bin -> String.split(bin, "", [trim: true]) end)
+    co2_bits = load_file_input_stream(filename)
       |> find_input(false, 0)
 
-    IO.inspect(co2_bits)
-
-    # TODO convert to decimal and multiply
-
-    0
+    to_decimal(oxygen_bits) * to_decimal(co2_bits)
   end
 
   defp find_input(input_list, use_common_bits, index) do
@@ -49,9 +39,9 @@ defmodule Adv21.Day03.Diagnostics do
 
   defp filter_input(input_list, use_common_bits, index) do
     # TODO get_commons need to handle equal counts (e.g. [z=5, o=5], use 1 or 0 (common or least))
-    [commons, least_commons] input_list
+    {commons, least_commons} = input_list
       |> get_bits_usage()
-      |> get_commons_and_least_commons()
+      |> get_commons_and_least_commons(use_common_bits)
 
     mask = if use_common_bits do
       commons
@@ -60,7 +50,7 @@ defmodule Adv21.Day03.Diagnostics do
     end
 
     input_list
-      |> Enum.filter(fn b -> Enum.at(b, index) == Enum.at(mask, index))
+      |> Enum.filter(fn b -> Enum.at(b, index) == Enum.at(mask, index) end)
   end
 
   defp get_bits_usage(input_list) do
@@ -76,8 +66,8 @@ defmodule Adv21.Day03.Diagnostics do
           |> Enum.reduce({bits_usage, 0}, fn b, {bus, i} ->
             [z, o] = Enum.at(bus, i)
             counts = case b do
-              "0" -> [z + 1, o]
-              "1" -> [z, o + 1]
+              0 -> [z + 1, o]
+              1 -> [z, o + 1]
             end
             {List.replace_at(bus, i, counts), i + 1}
           end)
@@ -86,14 +76,24 @@ defmodule Adv21.Day03.Diagnostics do
       end)
   end
 
-  def get_commons_and_least_commons(bits_usage) do
+  def get_commons_and_least_commons(bits_usage, use_common_values \\ nil) do
     bits_usage
       |> Enum.reduce({[],[]}, fn [z, o], {common_bits, least_bits} ->
-        if z > o do
-          {common_bits ++ [0], least_bits ++ [1]}
-        else
-          {common_bits ++ [1], least_bits ++ [0]}
+        cond do
+          use_common_values && z == o -> {common_bits ++ [1], least_bits ++ [1]}
+          use_common_values != nil && !use_common_values && z == o -> {common_bits ++ [0], least_bits ++ [0]}
+          z > o -> {common_bits ++ [0], least_bits ++ [1]}
+          true -> {common_bits ++ [1], least_bits ++ [0]}
         end
+      end)
+  end
+
+  defp load_file_input_stream(filename) do
+    File.stream!(filename)
+      |> Enum.map(&String.trim/1)
+      |> Enum.map(fn bin ->
+        String.split(bin, "", [trim: true])
+          |> Enum.map(&String.to_integer/1)
       end)
   end
 
